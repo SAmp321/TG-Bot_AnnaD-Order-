@@ -75,16 +75,13 @@ body_show_kb = InlineKeyboardMarkup(inline_keyboard=[
 )
 
 
-#Подтверждение покупки
-yes_buy_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='🛒КУПИТЬ', callback_data='buy'), InlineKeyboardButton(text='❌ОТМЕНА', callback_data='cancel')]
-])
 #Быстрый переход на "купленные вебинары" после покупки
 my_web_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text='перейти к вебинару', callback_data='go_to_the_webinar')]
     ]
 )
+
 #Переход к вебинар ХОЧУ говорить
 my_web_want_talk = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -101,6 +98,12 @@ my_web_sex = InlineKeyboardMarkup(
 my_web_body = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text='перейти к вебинару', callback_data='webinare_body')]
+    ]
+)
+#переход к вебинару отношения
+my_web_rela = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='перейти к вебинару', callback_data='webinare_rela')]
     ]
 )
 

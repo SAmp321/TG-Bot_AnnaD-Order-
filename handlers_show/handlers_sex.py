@@ -23,25 +23,36 @@ import time
 import os
 from handlers_show.__init__ import router, logger
 from bot.dao.database import db_Ibaza
-from data.reg import Video_id_Sex, Audio_id_Sex, TXT_caption_Sex
+from data.reg import Video_id_Sex, Audio_id_Sex, TXT_caption_Sex,  Photo_all
 from handlers_show.handlers import delete_message_after_delay
 
 DB_PROMOKODE = Path('data/promokode.db')
 #Чек сексуальность -- [Купить вебинар (Запись)]
 @router.callback_query(F.data == 'Sexuality')
 async def Send_sexuality_video_1(callback: CallbackQuery, bot: Bot):
+    error_messages = []
     try:
         await callback.answer()
+
+        #Берем id Фото
+        id_photo = Photo_all.get('Photo_Sex_prevu')
+        if not id_photo:
+            error_messages.append('Фото не смогло загрузиться. Пожалуйста обратитесь в поддержку')
         
-        id_file = 'AgACAgIAAxkBAAIPwGidwbhphAOkcedzhLgoYWQ9vKwGAAKr9TEbIE7wSKe_9cIHm6v4AQADAgADeAADNgQ'
-            
+        #Проверка на существования id фото
+        if error_messages:
+            error_text = "\n".join(error_messages) + "\n\nПожалуйста, напишите в поддержку"
+            await callback.message.answer(error_text)
+            await callback.answer()  # Завершаем callback
+            return
+        
         async with ChatActionSender.upload_photo(
             chat_id=callback.message.chat.id,
             bot=bot
         ):
             await bot.send_photo(
                 chat_id=callback.message.chat.id,
-                photo=id_file,
+                photo=id_photo,
                 reply_markup=kb_main.sex_show_kb,
                 caption='Тут про возрождение сексуальности, про то, как же вырастить детей не в своих страхах и ограничениях, ' 
                         'а личностей в свободе и с возможностью помочь им  сформировать свою индивидуальную историю с ' 
@@ -149,54 +160,6 @@ async def handle_pay_for_content_sex(callback: CallbackQuery, bot: Bot):
 @router.pre_checkout_query()
 async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery, bot: Bot) -> None:
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
-    
-@router.callback_query(F.data == 'buy_sex')
-async def send_file_from_db_sex(callback: CallbackQuery, bot: Bot):
-    user_id = callback.from_user.id
-    
-    if not await check_payment(user_id):
-        pay_button = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text="💳 Оплатить доступ", 
-                callback_data="pay_for_content"
-            )]
-        ])
-        await callback.message.answer(
-            "❌ Доступ к видео закрыт. Необходима оплата 5000 руб.",
-            reply_markup=pay_button
-        )
-        await callback.answer()
-        return
-    
-    # Если оплата есть - продолжаем отправку
-    file_path = get_user_payments(1)
-    max_size_description = "1й вебинар Сексуальность"
-    
-    if not file_path or not os.path.exists(file_path):
-        await callback.message.answer("Видео не найдено | 404 | Обратитесь к администратору")
-        return
-    
-    file_size = os.path.getsize(file_path) / (1024 * 1024)
-    
-    if file_size <= 50:
-        async with ChatActionSender.upload_video(
-            chat_id=callback.message.chat.id,  
-            bot=bot
-        ):
-            file = FSInputFile(file_path)
-            await callback.message.answer_video(file)  
-    else:
-        try:
-            file_id = "BAACAgIAAxkBAAIDOWhiXoFoFPKZf-f8gfBo-1189e6-AAIQeQACgiwRS0EiLJVD7ITfNgQ"
-            await bot.send_document(
-                chat_id=callback.message.chat.id,  
-                document=file_id,
-                caption=max_size_description
-            )
-        except Exception as e:
-            await callback.message.answer(f"Ошибка отправки: {e} | Обратитесь к администратору")  
-    
-    await callback.answer()  
 
 #Проверка прошла ли платёжка
 @router.pre_checkout_query()

@@ -37,7 +37,7 @@ async def Send_body_video_1(callback: CallbackQuery, bot: Bot):
         #Берём id фото
         id_photo = Photo_all.get('Photo_body_prevu')
         if not id_photo:
-            error_messages.append('Фото не смогло загрузиться. пожалуйста обратитесь в поддержку')
+            error_messages.append('Фото не смогло загрузиться. Пожалуйста обратитесь в поддержку')
             #Если фото нет показываем ошибку
             if error_messages:
                 error_text = "\n".join(error_messages) + "\n\nПожалуйста, напишите в поддержку"
@@ -535,4 +535,4 @@ async def go_to_the_webinar_want_talk(callback: CallbackQuery):
 #Быстрый переход к вебинару ХОЧУ говорить
 @router.callback_query(F.data == "webinare_body")
 async def webinare_want_talk_transition(callback: CallbackQuery):
-    await callback.message.answer('Выберите часть:', reply_markup=kb_main.parts_body)
+    await callback.message.answer('Выберите часть:', reply_markup=kb_main.my_web_sex)

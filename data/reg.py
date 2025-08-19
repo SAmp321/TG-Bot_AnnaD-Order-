@@ -1,5 +1,7 @@
 #Фотографии для всех
-Photo_all = {'Photo_body_prevu' : 'AgACAgIAAxkBAAIP82id08f3q9YSorR03UazR1xgU2RuAAKB9jEb8CDwSPpBbhXhWi5AAQADAgADeQADNgQ'}
+Photo_all = {'Photo_body_prevu' : 'AgACAgIAAxkBAAIP82id08f3q9YSorR03UazR1xgU2RuAAKB9jEb8CDwSPpBbhXhWi5AAQADAgADeQADNgQ',
+            'Photo_rela_prevu' : 'AgACAgIAAxkBAAISxWikejuu-QABR11sWxNLT7Ky52u1bgACm_kxG2FAKElrGmQYBFAD9gEAAwIAA3kAAzYE',
+            'Photo_Sex_prevu' : 'AgACAgIAAxkBAAIPwGidwbhphAOkcedzhLgoYWQ9vKwGAAKr9TEbIE7wSKe_9cIHm6v4AQADAgADeAADNgQ'}
 
 #Видео хочу говорить
 Video_id_WT= { "Prevu_want_talk": "BAACAgIAAxkBAAIQg2igm6bGXtWPgkR2fk3oGJNtbvy_AAIpeAACU-sISSxrY3Kv3lTaNgQ", 
@@ -86,3 +88,29 @@ TXT_caption_body = {
 
     'text_caption_video_Body_three' : '',
         'text_caption_audio_Body_three' : '',}
+
+#Видео ОТНОШЕНИЯ
+Video_id_rela= { "Prevu_rela": "BAACAgIAAxkBAAISRWih-G7iS484IBtnk3meRBpFEAIuAALafQACh0wRSVFliRkNOwlZNgQ", 
+            "rela_video_one": "BAACAgIAAxkBAAISRWih-G7iS484IBtnk3meRBpFEAIuAALafQACh0wRSVFliRkNOwlZNgQ", 
+            "rela_video_two": '',
+            "rela_video_three": ''}
+#Аудио ОТНОШЕНИЯ
+Audio_id_rela = {'rela_audio_one': 'CQACAgIAAxkBAAISgWikX4CjGmU4me7c-eZhqLXJKy8DAAK_fQACYUAgSa8ycAtSWub0NgQ',
+            'rela_audio_two': '',
+            'rela_audio_three': ''}
+#ОПИСАНИЯ ОТНОШЕНИЯ
+TXT_caption_rela = {
+    'text_caption_video__one' :'🎬 Доступ к вебинару "Сексуальность" открыт на 30 дней! '
+                '\n \n ♨️Внимание! Сообщение автоматически удалится через 12 часов, '
+                'что бы в вашей ленте было только самое актуальное для просмотра. '
+                '\n \n❔Для того что бы опять открыть вебинар нажмите на "купленные вебинары" '
+                '➡️ выберите нужный вам вебинар ➡️ выберите нужную вам часть вебинара',
+        'text_caption_audio_Rela_one': '🎧 Аудио версия вебинара "Хочу говорить 1" \n \n ♨️Внимание! Сообщение автоматически удалится через 12 часов, '
+            'что бы в вашей ленте было только самое актуальное для просмотра. ',
+
+    'text_caption_video_Rela_two' : '',
+        'text_caption_audio_Rela_two' : '',
+
+    'text_caption_video_Rela_three' : '',
+        'text_caption_audio_Rela_three' : '',}
+
