@@ -229,7 +229,7 @@ async def process_successful_payment(message: Message, bot: Bot):
             if promo:
                 await db.execute(
                     """UPDATE use_promokode_users 
-                    SET chapter = 'want_talk_use' 
+                    SET chapter = 'Sexu_use' 
                     WHERE user_id = ? AND tag = ?""",
                     (user_id, promo['tag'])
                 )

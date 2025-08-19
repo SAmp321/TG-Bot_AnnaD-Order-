@@ -1,3 +1,6 @@
+#Фотографии для всех
+Photo_all = {'Photo_body_prevu' : 'AgACAgIAAxkBAAIP82id08f3q9YSorR03UazR1xgU2RuAAKB9jEb8CDwSPpBbhXhWi5AAQADAgADeQADNgQ'}
+
 #Видео хочу говорить
 Video_id_WT= { "Prevu_want_talk": "BAACAgIAAxkBAAIQg2igm6bGXtWPgkR2fk3oGJNtbvy_AAIpeAACU-sISSxrY3Kv3lTaNgQ", 
             "want_talk_video_one": "BAACAgIAAxkBAAIDOWhiXoFoFPKZf-f8gfBo-1189e6-AAIQeQACgiwRS0EiLJVD7ITfNgQ", 
@@ -61,11 +64,11 @@ TXT_caption_Sex = {
 
 #Видео тело
 Video_id_body= { "Prevu_body": "BAACAgIAAxkBAAISRWih-G7iS484IBtnk3meRBpFEAIuAALafQACh0wRSVFliRkNOwlZNgQ", 
-            "body_video_one": "", 
+            "body_video_one": "BAACAgIAAxkBAAISRWih-G7iS484IBtnk3meRBpFEAIuAALafQACh0wRSVFliRkNOwlZNgQ", 
             "body_video_two": '',
             "body_video_three": ''}
 #Аудио тело
-Audio_id_body = {'body_audio_one': '',
+Audio_id_body = {'body_audio_one': 'CQACAgIAAxkBAAISgWikX4CjGmU4me7c-eZhqLXJKy8DAAK_fQACYUAgSa8ycAtSWub0NgQ',
             'body_audio_two': '',
             'body_audio_three': ''}
 #Описание тело

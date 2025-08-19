@@ -24,17 +24,26 @@ import time
 import os
 import asyncio
 from handlers_show.__init__ import router, logger
-from data.reg import Video_id_body, Audio_id_body, TXT_caption_body
+from data.reg import Video_id_body, Audio_id_body, TXT_caption_body, Photo_all
 from bot.dao.database import db_Ibaza
 
 DB_PROMOKODE = Path('data/promokode.db')
 #Чек "Тело" [Купить вебинар (Запись)]
 @router.callback_query(F.data == 'Body')
 async def Send_body_video_1(callback: CallbackQuery, bot: Bot):
+    error_messages = []
     try:
         await callback.answer()
-        
-        id_file = 'AgACAgIAAxkBAAIP82id08f3q9YSorR03UazR1xgU2RuAAKB9jEb8CDwSPpBbhXhWi5AAQADAgADeQADNgQ'
+        #Берём id фото
+        id_photo = Photo_all.get('Photo_body_prevu')
+        if not id_photo:
+            error_messages.append('Фото не смогло загрузиться. пожалуйста обратитесь в поддержку')
+            #Если фото нет показываем ошибку
+            if error_messages:
+                error_text = "\n".join(error_messages) + "\n\nПожалуйста, напишите в поддержку"
+                await callback.message.answer(error_text)
+                await callback.answer()  # Завершаем callback
+                return
             
         async with ChatActionSender.upload_photo(
             chat_id=callback.message.chat.id,
@@ -42,7 +51,7 @@ async def Send_body_video_1(callback: CallbackQuery, bot: Bot):
         ):
             await bot.send_photo(
                 chat_id=callback.message.chat.id,
-                photo=id_file,
+                photo=id_photo,
                 reply_markup=kb_main.body_show_kb,
                 caption='Тут про живот. Чем он живёт и что в нём спрятано. Зачем он такой. '
                         'Тут про огразм. Откуда он в теле и что для него нужно.'
@@ -60,7 +69,7 @@ async def handle_pay_for_content_body(callback: CallbackQuery, bot: Bot):
         user_id = callback.from_user.id
         username = callback.from_user.username or "NoUsername"
         base_amount = 500000  # 5000.00 RUB в копейках
-        payload = "body_one"
+        payload = "body_one_one"
         payment_id = f"pay_{user_id}_{int(time.time())}"
         used_promo_tag = None
         discount_percent = 0
@@ -151,7 +160,7 @@ async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery, bot: 
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
 #Отправка после платежки файл или текст
-@router.message(F.successful_payment.invoice_payload == "Prevu_body")
+@router.message(F.successful_payment.invoice_payload == "body_one_one")
 async def process_successful_payment(message: Message, bot: Bot):
     try:
         user_id = message.from_user.id
@@ -172,7 +181,7 @@ async def process_successful_payment(message: Message, bot: Bot):
             # Находим промокод для обновления
             cursor = await db.execute(
                 """SELECT tag FROM use_promokode_users 
-                WHERE user_id = ? AND chapter = 'body'
+                WHERE user_id = ? AND chapter = 'body_one_one'
                 LIMIT 1""",
                 (user_id,)
             )
@@ -181,7 +190,7 @@ async def process_successful_payment(message: Message, bot: Bot):
             if promo:
                 await db.execute(
                     """UPDATE use_promokode_users 
-                    SET chapter = 'want_talk_use' 
+                    SET chapter = 'body_one_one_use' 
                     WHERE user_id = ? AND tag = ?""",
                     (user_id, promo['tag'])
                 )
@@ -195,13 +204,13 @@ async def process_successful_payment(message: Message, bot: Bot):
             protect_content=True
         )
 
-        # 3. Обновляем основную БД (ваша функция)
+        # 3. Обновляем основную БД
         await grant_content_access(
             user_id=user_id,
-            content_id="body_one",
+            content_id="body_one_one",
             days=30
         )
-        await message.answer('Перейти к вебенару?', reply_markup=kb_main.my_web_want_talk)
+        await message.answer('Перейти к вебенару?', reply_markup=kb_main.parts_body)
 
     except Exception as e:
         print(f"Ошибка обработки платежа: {e}")
@@ -255,6 +264,12 @@ async def send_file_from_db_body(callback: CallbackQuery, bot: Bot):
     
     await callback.answer()  
 
+#Чек сами лист видео 1-N в мои вебинары
+@router.callback_query(F.data == 'purchased_body')
+async def purchased_want_talk(callback: CallbackQuery):
+    await callback.message.answer('Выберите часть:', reply_markup=kb_main.parts_body)
+    await callback.answer()
+
 #Купленные вебинары 
 
 #1
@@ -263,9 +278,24 @@ async def purchades_body_one(callback: CallbackQuery, bot: Bot):
 
     sent_content = 0
     user_id = callback.from_user.id
-    specific_content_id = "body_one"
+    specific_content_id = "body_one_one"
     error_messages = []
     try:
+        #Проверка доступа
+        async with aiosqlite.connect(db_Ibaza) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute( 
+            '''SELECT content_id, protect_content 
+            FROM content_access WHERE user_id = ? 
+            AND content_id = ?
+            and (datetime('now') < expires_at OR NULL)''', 
+            (user_id, specific_content_id)) as cursor:
+                content_access = await cursor.fetchone()  
+                
+            if not content_access:
+                await callback.answer("❌ У вас нет доступа к этому материалу", show_alert=True)
+                return
+    
         #Наход ID и проверка на существование файлов
         id_video = Video_id_body.get('body_video_one')
         if not id_video:
@@ -289,6 +319,55 @@ async def purchades_body_one(callback: CallbackQuery, bot: Bot):
             await callback.answer()  # Завершаем callback
             return
         
+        
+
+        
+        # Отправляем видео
+        video_message = await bot.send_video(
+            chat_id=user_id,
+            video=id_video,
+            caption=text_caption_video,
+            protect_content=True 
+        )
+
+        sent_content += 1
+    
+
+        # Отправляем аудио с кнопкой
+        audio_message = await bot.send_audio(
+            chat_id=user_id,
+            audio=id_audio,
+            caption=text_caption_audio,
+            protect_content=True,
+        )
+        sent_content += 1
+
+        #Удаляем сообщения через 12 часов
+        if video_message:
+            await asyncio.sleep(10)
+            await bot.delete_message(
+                chat_id=user_id,
+                message_id=video_message.message_id
+            )
+            
+        if audio_message:
+            await bot.delete_message(
+                chat_id=user_id,
+                message_id=audio_message.message_id
+            )
+
+    except Exception as e:
+        logger.error(f"Ошибка удаления: {e}")
+        await callback.answer("⚠️ Не удалось удалить сообщение", show_alert=True)
+#2
+@router.callback_query(F.data == "purchades_body_two")
+async def purchades_body_two(callback: CallbackQuery, bot: Bot):
+
+    sent_content = 0
+    user_id = callback.from_user.id
+    specific_content_id = "body_one_one"
+    error_messages = []
+    try:
         #Проверка доступа
         async with aiosqlite.connect(db_Ibaza) as db:
             db.row_factory = aiosqlite.Row
@@ -303,53 +382,6 @@ async def purchades_body_one(callback: CallbackQuery, bot: Bot):
             if not content_access:
                 await callback.answer("❌ У вас нет доступа к этому материалу", show_alert=True)
                 return
-            
-            # Отправляем видео
-            video_message = await bot.send_video(
-                chat_id=user_id,
-                video=id_video,
-                caption=text_caption_video,
-                protect_content=True 
-            )
-
-            sent_content += 1
-            
-
-            # Отправляем аудио с кнопкой
-            audio_message = await bot.send_audio(
-                chat_id=user_id,
-                audio=id_audio,
-                caption=text_caption_audio,
-                protect_content=True,
-            )
-            sent_content += 1
-
-            #Удаляем сообщения через 12 часов
-            if video_message:
-                await asyncio.sleep(10)
-                await bot.delete_message(
-                    chat_id=user_id,
-                    message_id=video_message.message_id
-                )
-                
-            if audio_message:
-                await bot.delete_message(
-                    chat_id=user_id,
-                    message_id=audio_message.message_id
-                )
-
-    except Exception as e:
-        logger.error(f"Ошибка удаления: {e}")
-        await callback.answer("⚠️ Не удалось удалить сообщение", show_alert=True)
-#2
-@router.callback_query(F.data == "purchades_body_two")
-async def purchades_body_two(callback: CallbackQuery, bot: Bot):
-
-    sent_content = 0
-    user_id = callback.from_user.id
-    specific_content_id = "body_one"
-    error_messages = []
-    try:
         #Наход ID и проверка на существование файлов
         id_video = Video_id_body.get('body_video_two')
         if not id_video:
@@ -372,7 +404,53 @@ async def purchades_body_two(callback: CallbackQuery, bot: Bot):
             await callback.message.answer(error_text)
             await callback.answer()  # Завершаем callback
             return
+            
+        # Отправляем видео
+        video_message = await bot.send_video(
+            chat_id=user_id,
+            video=id_video,
+            caption=text_caption_video,
+            protect_content=True 
+        )
+
+        sent_content += 1
         
+
+        # Отправляем аудио с кнопкой
+        audio_message = await bot.send_audio(
+            chat_id=user_id,
+            audio=id_audio,
+            caption=text_caption_audio,
+            protect_content=True,
+        )
+        sent_content += 1
+
+        #Удаляем сообщения через 12 часов
+        if video_message:
+            await asyncio.sleep(10)
+            await bot.delete_message(
+                chat_id=user_id,
+                message_id=video_message.message_id
+            )
+            
+        if audio_message:
+            await bot.delete_message(
+                chat_id=user_id,
+                message_id=audio_message.message_id
+            )
+
+    except Exception as e:
+        logger.error(f"Ошибка удаления: {e}")
+        await callback.answer("⚠️ Не удалось удалить сообщение", show_alert=True)
+#3
+@router.callback_query(F.data == "purchades_body_three")
+async def purchades_body_three(callback: CallbackQuery, bot: Bot):
+
+    sent_content = 0
+    user_id = callback.from_user.id
+    specific_content_id = "body_one_one"
+    error_messages = []
+    try:
         #Проверка доступа
         async with aiosqlite.connect(db_Ibaza) as db:
             db.row_factory = aiosqlite.Row
@@ -387,53 +465,6 @@ async def purchades_body_two(callback: CallbackQuery, bot: Bot):
             if not content_access:
                 await callback.answer("❌ У вас нет доступа к этому материалу", show_alert=True)
                 return
-            
-            # Отправляем видео
-            video_message = await bot.send_video(
-                chat_id=user_id,
-                video=id_video,
-                caption=text_caption_video,
-                protect_content=True 
-            )
-
-            sent_content += 1
-            
-
-            # Отправляем аудио с кнопкой
-            audio_message = await bot.send_audio(
-                chat_id=user_id,
-                audio=id_audio,
-                caption=text_caption_audio,
-                protect_content=True,
-            )
-            sent_content += 1
-
-            #Удаляем сообщения через 12 часов
-            if video_message:
-                await asyncio.sleep(10)
-                await bot.delete_message(
-                    chat_id=user_id,
-                    message_id=video_message.message_id
-                )
-                
-            if audio_message:
-                await bot.delete_message(
-                    chat_id=user_id,
-                    message_id=audio_message.message_id
-                )
-
-    except Exception as e:
-        logger.error(f"Ошибка удаления: {e}")
-        await callback.answer("⚠️ Не удалось удалить сообщение", show_alert=True)
-#3
-@router.callback_query(F.data == "purchades_body_three")
-async def purchades_body_three(callback: CallbackQuery, bot: Bot):
-
-    sent_content = 0
-    user_id = callback.from_user.id
-    specific_content_id = "body_one"
-    error_messages = []
-    try:
         #Наход ID и проверка на существование файлов
         id_video = Video_id_body.get('body_video_three')
         if not id_video:
@@ -456,55 +487,40 @@ async def purchades_body_three(callback: CallbackQuery, bot: Bot):
             await callback.message.answer(error_text)
             await callback.answer()  # Завершаем callback
             return
+            
+        # Отправляем видео
+        video_message = await bot.send_video(
+            chat_id=user_id,
+            video=id_video,
+            caption=text_caption_video,
+            protect_content=True 
+        )
+
+        sent_content += 1
         
-        #Проверка доступа
-        async with aiosqlite.connect(db_Ibaza) as db:
-            db.row_factory = aiosqlite.Row
-            async with db.execute( 
-            '''SELECT content_id, protect_content 
-            FROM content_access WHERE user_id = ? 
-            AND content_id = ?
-            and (datetime('now') < expires_at OR NULL)''', 
-            (user_id, specific_content_id)) as cursor:
-                content_access = await cursor.fetchone()  
-                
-            if not content_access:
-                await callback.answer("❌ У вас нет доступа к этому материалу", show_alert=True)
-                return
-            
-            # Отправляем видео
-            video_message = await bot.send_video(
+
+        # Отправляем аудио с кнопкой
+        audio_message = await bot.send_audio(
+            chat_id=user_id,
+            audio=id_audio,
+            caption=text_caption_audio,
+            protect_content=True,
+        )
+        sent_content += 1
+
+        #Удаляем сообщения через 12 часов
+        if video_message:
+            await asyncio.sleep(10)
+            await bot.delete_message(
                 chat_id=user_id,
-                video=id_video,
-                caption=text_caption_video,
-                protect_content=True 
+                message_id=video_message.message_id
             )
-
-            sent_content += 1
             
-
-            # Отправляем аудио с кнопкой
-            audio_message = await bot.send_audio(
+        if audio_message:
+            await bot.delete_message(
                 chat_id=user_id,
-                audio=id_audio,
-                caption=text_caption_audio,
-                protect_content=True,
+                message_id=audio_message.message_id
             )
-            sent_content += 1
-
-            #Удаляем сообщения через 12 часов
-            if video_message:
-                await asyncio.sleep(10)
-                await bot.delete_message(
-                    chat_id=user_id,
-                    message_id=video_message.message_id
-                )
-                
-            if audio_message:
-                await bot.delete_message(
-                    chat_id=user_id,
-                    message_id=audio_message.message_id
-                )
 
     except Exception as e:
         logger.error(f"Ошибка удаления: {e}")
@@ -517,6 +533,6 @@ async def go_to_the_webinar_want_talk(callback: CallbackQuery):
     await callback.message.answer('Купленные вебинары:', reply_markup=kb_main.Purchased_webinars)
     await callback.answer()
 #Быстрый переход к вебинару ХОЧУ говорить
-@router.callback_query(F.data == "webinare_want_talk")
+@router.callback_query(F.data == "webinare_body")
 async def webinare_want_talk_transition(callback: CallbackQuery):
-    await callback.message.answer('Выберите часть:', reply_markup=kb_main.parts_want_talk)
+    await callback.message.answer('Выберите часть:', reply_markup=kb_main.parts_body)

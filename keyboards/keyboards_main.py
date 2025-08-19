@@ -97,6 +97,12 @@ my_web_sex = InlineKeyboardMarkup(
         [InlineKeyboardButton(text='перейти к вебинару', callback_data='webinare_sex')]
     ]
 )
+#переход к вебинару тело
+my_web_body = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='перейти к вебинару', callback_data='webinare_body')]
+    ]
+)
 
 
 #Просмотр вебинаров
