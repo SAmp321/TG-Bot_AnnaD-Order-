@@ -26,8 +26,9 @@ class NewPromokode(StatesGroup):
     max_enteger = State()
     tag_promo = State()
     emoynt_enteger = State()
+    chapter = State()
 
-@router.message(F.text == 'new_promokode')
+@router.message(F.text == 'Создать промокод')
 async def new_promokode_create(message: Message):
     if not is_admin(message.from_user.id):
         return await message.answer("Доступ запрещен")
@@ -38,7 +39,8 @@ async def new_promokode_create(message: Message):
         '2. Дата начала действия (ГГГГ-ММ-ДД)\n'
         '3. Дата окончания (ГГГГ-ММ-ДД)\n'
         '4. Максимальное количество использований\n'
-        '5. TAG промокода (начинается с *)',
+        '5. TAG промокода (начинается с *)'
+        'Выберите для какого вебинара будет использоваться промокод',
         reply_markup=kb_admin.new_promokode
     )
 
@@ -46,6 +48,34 @@ async def new_promokode_create(message: Message):
 async def want_create_promokode(callback: CallbackQuery, state: FSMContext):
     if not is_admin(callback.from_user.id):
         return await callback.answer("Доступ запрещен", show_alert=True)
+    await state.update_data(chapter='want_talk')
+    await state.set_state(NewPromokode.percent)
+    await callback.message.answer("Укажите процент скидки (1-98) (без %) [более 99, 100 процентов не вводить]:")
+    await callback.answer()
+
+@router.callback_query(F.data == 'Sex_promokode')
+async def want_create_promokode(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        return await callback.answer("Доступ запрещен", show_alert=True)
+    await state.update_data(chapter='sexuality')
+    await state.set_state(NewPromokode.percent)
+    await callback.message.answer("Укажите процент скидки (1-98) (без %) [более 99, 100 процентов не вводить]:")
+    await callback.answer()
+
+@router.callback_query(F.data == 'Relationships_promokode')
+async def want_create_promokode(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        return await callback.answer("Доступ запрещен", show_alert=True)
+    await state.update_data(chapter='relationships')
+    await state.set_state(NewPromokode.percent)
+    await callback.message.answer("Укажите процент скидки (1-98) (без %) [более 99, 100 процентов не вводить]:")
+    await callback.answer()
+
+@router.callback_query(F.data == 'Body_promokode')
+async def want_create_promokode(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        return await callback.answer("Доступ запрещен", show_alert=True)
+    await state.update_data(chapter='body')
     await state.set_state(NewPromokode.percent)
     await callback.message.answer("Укажите процент скидки (1-98) (без %) [более 99, 100 процентов не вводить]:")
     await callback.answer()
@@ -58,29 +88,29 @@ async def process_percent(message: Message, state: FSMContext):
             raise ValueError
         await state.update_data(percent=percent)
         await state.set_state(NewPromokode.start_promokode)
-        await message.answer("Введите дату начала действия (ГГГГ-ММ-ДД):")
+        await message.answer("Введите дату начала действия (дд.мм.гггг):")
     except ValueError:
         await message.answer("Некорректный процент! Введите число от 1 до 100")
 
 @router.message(NewPromokode.start_promokode)
 async def process_start_date(message: Message, state: FSMContext):
     try:
-        datetime.strptime(message.text, "%Y-%m-%d")
+        datetime.strptime(message.text, "%d.%m.%Y")
         await state.update_data(start_promokode=message.text)
         await state.set_state(NewPromokode.end_promokode)
-        await message.answer("Введите дату окончания (ГГГГ-ММ-ДД):")
+        await message.answer("Введите дату окончания (дд.мм.гггг:")
     except ValueError:
-        await message.answer("Неверный формат даты! Используйте ГГГГ-ММ-ДД")
+        await message.answer("Неверный формат даты! Используйте дд.мм.гггг (01.01.2025)")
 
 @router.message(NewPromokode.end_promokode)
 async def process_end_date(message: Message, state: FSMContext):
     try:
-        datetime.strptime(message.text, "%Y-%m-%d")
+        datetime.strptime(message.text, "%d.%m.%Y")
         await state.update_data(end_promokode=message.text)
         await state.set_state(NewPromokode.max_enteger)
         await message.answer("Введите максимальное количество использований:")
     except ValueError:
-        await message.answer("Неверный формат даты! Используйте ГГГГ-ММ-ДД")
+        await message.answer("Неверный формат даты! Используйте дд.мм.гггг (01.01.2025)")
 
 @router.message(NewPromokode.max_enteger)
 async def process_max_uses(message: Message, state: FSMContext):
@@ -101,7 +131,7 @@ async def process_tag_promo(message: Message, state: FSMContext):
         return
     
     data = await state.get_data()
-    chapter = 'want_talk'
+    chapter = data.get('chapter')
     
     async with aiosqlite.connect(DB_PROMOKODE) as db:
         await db.execute(
@@ -128,95 +158,111 @@ async def process_tag_promo(message: Message, state: FSMContext):
     )
     await state.clear()
 
-@router.message(F.text == 'ввести промокод')
-async def use_promokode(message: Message):
-    try:
-        await message.answer('Введите пожалуйста ваш промокод:')
-        
-        @router.message()
-        async def process_promocode(input_msg: Message):
-            try:
-                user_promocode = input_msg.text.strip().upper()
-                user_id = input_msg.from_user.id
-                current_date = datetime.now().date()
-                
-                async with aiosqlite.connect(DB_PROMOKODE) as db:
-                    db.row_factory = aiosqlite.Row
-                    
-                    cursor = await db.execute(
-                        "SELECT * FROM promokode_create WHERE tag = ?", 
-                        (user_promocode,)
-                    )
-                    promocode = await cursor.fetchone()
-                    
-                    if not promocode:
-                        await input_msg.answer('❌ Промокод не найден')
-                        return
-                    
-                    try:
-                        start_date = datetime.strptime(promocode['start_promokode'], "%Y-%m-%d").date()
-                        end_date = datetime.strptime(promocode['end_promokode'], "%Y-%m-%d").date()
-                        
-                        if current_date < start_date:
-                            await input_msg.answer(f'⏳ Промокод будет активен с {start_date.strftime("%d.%m.%Y")}')
-                            return
-                        
-                        if current_date > end_date:
-                            await input_msg.answer('⌛ Срок действия промокода истёк')
-                            return
-                    except ValueError as e:
-                        logger.error(f"Ошибка формата даты: {e}")
-                        await input_msg.answer('⚠️ Ошибка в данных промокода')
-                        return
-                    
-                    cursor = await db.execute(
-                        "SELECT COUNT(*) as count FROM promocode_usages WHERE promocode_tag = ?",
-                        (promocode['tag'],)
-                    )
-                    uses_count = (await cursor.fetchone())['count']
-                    
-                    if uses_count >= int(promocode['max_enteger']):
-                        await input_msg.answer('🚫 Лимит использований промокода исчерпан')
-                        return
-                    
-                    cursor = await db.execute(
-                        "SELECT COUNT(*) as count FROM use_promokode_users WHERE user_id = ? AND tag = ?",
-                        (user_id, promocode['tag'])
-                    )
-                    already_used = (await cursor.fetchone())['count']
-                    
-                    if already_used:
-                        await input_msg.answer('⚠️ Вы уже использовали этот промокод ранее')
-                        return
-                    
-                    await db.execute(
-                        "INSERT INTO promocode_usages (user_id, promocode_tag, use_date) VALUES (?, ?, ?)",
-                        (user_id, promocode['tag'], current_date.isoformat())
-                    )
-                    
-                    await db.execute(
-                        "INSERT INTO use_promokode_users (user_id, percent, tag, chapter) VALUES (?, ?, ?, ?)",
-                        (user_id, promocode['percent'], promocode['tag'], promocode['chapter'])
-                    )
-                    
-                    await db.execute(
-                        """UPDATE promokode_create 
-                        SET emoynt_enteger = emoynt_enteger + 1 
-                        WHERE tag = ?""",
-                        (promocode['tag'],)
-                    )
+class PromocodeState(StatesGroup):
+    waiting_promocode = State()
 
-                    await db.commit()
+@router.message(F.text == 'ввести промокод')
+async def use_promokode(message: Message, state: FSMContext):
+    await message.answer('Введите пожалуйста ваш промокод:')
+    await state.set_state(PromocodeState.waiting_promocode)
+
+
+@router.message(PromocodeState.waiting_promocode)
+async def process_promocode(message: Message, state: FSMContext):
+    try:
+        user_promocode = message.text.strip().upper()
+        user_id = message.from_user.id
+        current_date = datetime.now().date()
+        
+        async with aiosqlite.connect(DB_PROMOKODE) as db:
+            db.row_factory = aiosqlite.Row
+            
+            # 1. Поиск промокода в базе
+            cursor = await db.execute(
+                "SELECT * FROM promokode_create WHERE tag = ?", 
+                (user_promocode,)
+            )
+            promocode = await cursor.fetchone()
+            
+            if not promocode:
+                await message.answer('❌ Промокод не найден')
+                await state.clear()
+                return
+            
+            # проверка даты
+            try:
+                start_date = promocode['start_promokode']
+                end_date = promocode['end_promokode']
+                
+                if current_date < start_date:
+                    await message.answer(f'⏳ Промокод будет активен с {start_date.strftime("%d.%m.%Y")}')
+                    await state.clear()
+                    return
+                
+                if current_date > end_date:
+                    await message.answer('⌛ Срок действия промокода истёк')
+                    await state.clear()
+                    return
                     
-                    await input_msg.answer(
-                        f'✅ Промокод "{promocode["tag"]}" применён!\n\n'
-                        f'• Скидка: {promocode["percent"]}%\n'
-                        f'• Категория: {promocode["chapter"]}'
-                    )
-            except Exception as e:
-                logger.error(f"Ошибка обработки промокода: {e}", exc_info=True)
-                await input_msg.answer('⚠️ Ошибка обработки промокода')
-    
+            except ValueError as e:
+                logger.error(f"Ошибка формата даты: {e}")
+                await message.answer('⚠️ Ошибка в данных промокода')
+                await state.clear()
+                return
+            
+            # 3. Проверка лимита использований
+            cursor = await db.execute(
+                "SELECT COUNT(*) as count FROM promocode_usages WHERE promocode_tag = ?",
+                (promocode['tag'],)
+            )
+            uses_count = (await cursor.fetchone())['count']
+            
+            if uses_count >= int(promocode['max_enteger']):
+                await message.answer('🚫 Лимит использований промокода исчерпан')
+                await state.clear()
+                return
+            
+            # 4. Проверка, использовал ли уже пользователь этот промокод
+            cursor = await db.execute(
+                "SELECT COUNT(*) as count FROM use_promokode_users WHERE user_id = ? AND tag = ?",
+                (user_id, promocode['tag'])
+            )
+            already_used = (await cursor.fetchone())['count']
+            
+            if already_used:
+                await message.answer('⚠️ Вы уже использовали этот промокод ранее')
+                await state.clear()
+                return
+            
+            # 5. Сохранение использования промокода
+            await db.execute(
+                "INSERT INTO promocode_usages (user_id, promocode_tag, use_date) VALUES (?, ?, ?)",
+                (user_id, promocode['tag'], current_date.isoformat())
+            )
+            
+            await db.execute(
+                "INSERT INTO use_promokode_users (user_id, percent, tag, chapter) VALUES (?, ?, ?, ?)",
+                (user_id, promocode['percent'], promocode['tag'], promocode['chapter'])
+            )
+            
+            await db.execute(
+                """UPDATE promokode_create 
+                SET emoynt_enteger = emoynt_enteger + 1 
+                WHERE tag = ?""",
+                (promocode['tag'],)
+            )
+
+            await db.commit()
+            
+            # 6. Успешное применение промокода
+            await message.answer(
+                f'✅ Промокод "{promocode["tag"]}" применён!\n\n'
+                f'• Скидка: {promocode["percent"]}%\n'
+                f'• Категория: {promocode["chapter"]}'
+            )
+            
     except Exception as e:
-        logger.error(f"Ошибка в use_promokode: {e}", exc_info=True)
-        await message.answer('⚠️ Произошла ошибка. Попробуйте позже.')
+        logger.error(f"Ошибка обработки промокода: {e}", exc_info=True)
+        await message.answer('⚠️ Ошибка обработки промокода')
+    finally:
+        await state.clear()

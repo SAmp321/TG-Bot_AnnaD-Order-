@@ -20,7 +20,7 @@ main_admin_kb = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text='/stats_for_sell')],
         [KeyboardButton(text='/start_stream')],
-        [KeyboardButton(text='new_promokode')],
+        [KeyboardButton(text='Создать промокод')],
         [KeyboardButton(text='/Exit')]
     ],
     resize_keyboard=True
@@ -45,7 +45,7 @@ get_payment_kb = InlineKeyboardMarkup(
 new_promokode = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text='Хочу говорить', callback_data='Want_talk_promokode')],
-        [InlineKeyboardButton(text='Сексуальность', callback_data='Sexuality_promokode')],
+        [InlineKeyboardButton(text='Сексуальность', callback_data='Sex_promokode')],
         [InlineKeyboardButton(text='Отношения', callback_data='Relationships_promokode')],
         [InlineKeyboardButton(text='Тело', callback_data='Body_promokode')]
 ])
