@@ -47,5 +47,6 @@ new_promokode = InlineKeyboardMarkup(
         [InlineKeyboardButton(text='Хочу говорить', callback_data='Want_talk_promokode')],
         [InlineKeyboardButton(text='Сексуальность', callback_data='Sex_promokode')],
         [InlineKeyboardButton(text='Отношения', callback_data='Relationships_promokode')],
-        [InlineKeyboardButton(text='Тело', callback_data='Body_promokode')]
+        [InlineKeyboardButton(text='Тело', callback_data='Body_promokode')],
+        [InlineKeyboardButton(text='Торт блаженство', callback_data='pie_bliss')]
 ])

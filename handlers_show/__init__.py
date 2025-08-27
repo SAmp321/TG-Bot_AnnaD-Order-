@@ -15,6 +15,7 @@ from .handlers import *
 from .handlers_admin import *
 from .handlers_stream import *
 from .promokode_hd import *
+from .handlers_pie import *
 
 
 # 3. Указываем что экспортируем

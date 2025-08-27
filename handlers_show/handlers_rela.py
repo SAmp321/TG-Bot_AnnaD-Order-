@@ -7,7 +7,6 @@ from aiogram.utils.chat_action import ChatActionSender
 from aiogram.types import (InlineKeyboardMarkup, InlineKeyboardButton)
 
 import logging
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 from yookassa import Configuration, Webhook

@@ -4,7 +4,6 @@ from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.chat_action import ChatActionSender
-from aiogram.types import (InlineKeyboardMarkup, InlineKeyboardButton)
 import asyncio
 import logging
 from pathlib import Path

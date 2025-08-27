@@ -14,9 +14,6 @@ import keyboards.keyboards_main as kb_main
 import keyboards.keyboards_shop as kb_shop
 from bot.dao.database import db_Ibaza as db
 
-Configuration.account_id = '7729207630'
-Configuration.secret_key = 'ваш_secret_key'
-
 dp = Dispatcher()
 from handlers_show.__init__ import router, logger
 
@@ -80,3 +77,8 @@ async def handle_media(message: Message):
         "Используйте этот ID в вашем коде",
         parse_mode="HTML"
     )
+    
+@router.message(Command("chat_id"))
+async def get_chat_id(message: Message):
+    chat_id = message.chat.id
+    await message.answer(f"🆔 Ваш Chat ID: `{chat_id}`", parse_mode="Markdown")

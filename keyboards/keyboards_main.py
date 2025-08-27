@@ -4,9 +4,10 @@ from aiogram.types import (
     InlineKeyboardMarkup, 
     InlineKeyboardButton
 )
-
+#, callback_data='info_before_buy_pie_bliss'
 #Главные кнопки
 main_kb = ReplyKeyboardMarkup(keyboard=[
+        [KeyboardButton(text='ТОРТ БЛАЖЕНСТВО')],
         [KeyboardButton(text='Купить вебинар (запись)'), KeyboardButton(text='ввести промокод')],
         [KeyboardButton(text='Прямая трансляция'), KeyboardButton(text='Купленные вебинары', callback_data ='my_video')],
         [KeyboardButton(text='Администраторская', callback_data='/admin'), KeyboardButton(text='Помощь')],
@@ -30,7 +31,6 @@ webinar_kb = InlineKeyboardMarkup(
         [InlineKeyboardButton(text='Тело', callback_data='Body')]
     ]
 )
-
 
 
 #Список видео хочу говорить
@@ -57,6 +57,7 @@ parts_body = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='2-я часть Тело', callback_data='purchades_body_two')],
     [InlineKeyboardButton(text='3-я часть Тело', callback_data='purchades_body_three')]
 ])
+
 #Купить курс ХОЧУ ГОВОРИТЬ
 want_talk_show_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='КУПИТЬ КУРС 5000₽', callback_data='pay_for_content')]]
@@ -74,6 +75,10 @@ body_show_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='КУПИТЬ КУРС 5000₽', callback_data='pay_for_content_body')]]
 )
 
+#КУПИТЬ ТОРТ БЛАЖЕНСТВО
+pie_bliss_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='КУПИТЬ ТОРТ 888₽', callback_data='pay_for_pie_bliss')]]
+)
 
 #Быстрый переход на "купленные вебинары" после покупки
 my_web_kb = InlineKeyboardMarkup(
