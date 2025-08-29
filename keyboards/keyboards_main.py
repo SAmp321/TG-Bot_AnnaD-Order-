@@ -4,7 +4,9 @@ from aiogram.types import (
     InlineKeyboardMarkup, 
     InlineKeyboardButton
 )
-#, callback_data='info_before_buy_pie_bliss'
+#-----------------------------------------------------------------------------------------------------------------------------#
+                                    #ГЛАВНОЕ МЕНЮ
+
 #Главные кнопки
 main_kb = ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text='ТОРТ БЛАЖЕНСТВО')],
@@ -13,25 +15,16 @@ main_kb = ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text='Администраторская', callback_data='/admin'), KeyboardButton(text='Помощь')],
 ],      resize_keyboard=True,       input_field_placeholder="Выберите действие")
 
+#-----------------------------------------------------------------------------------------------------------------------------#
+
+                                    #ОТДЕЛ КУПЛЕННЫХ ВЕБИНАРОВ
 #Купленные вебинары
 Purchased_webinars = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Хочу говорить', callback_data='purchased_want_talk')],
     [InlineKeyboardButton(text='Сексуальность', callback_data='purchased_Sexuality')],
+    [InlineKeyboardButton(text='Отношения', callback_data='purchased_relationships')],
     [InlineKeyboardButton(text='Тело', callback_data='purchased_body')]
 ])
-
-                        #КУПИТЬ ВЕБИНАР (запись)#
-
-#Список вебинаров
-webinar_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text='Хочу говорить', callback_data='Want_talk')],
-        [InlineKeyboardButton(text='Сексуальность', callback_data='Sexuality')],
-        [InlineKeyboardButton(text='Отношения', callback_data='Relationships')],
-        [InlineKeyboardButton(text='Тело', callback_data='Body')]
-    ]
-)
-
 
 #Список видео хочу говорить
 parts_want_talk = InlineKeyboardMarkup(inline_keyboard=[
@@ -58,6 +51,18 @@ parts_body = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='3-я часть Тело', callback_data='purchades_body_three')]
 ])
 
+#-----------------------------------------------------------------------------------------------------------------------------#
+                        #КУПИТЬ ВЕБИНАР (запись)#
+
+#Список вебинаров
+webinar_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='Хочу говорить', callback_data='Want_talk')],
+        [InlineKeyboardButton(text='Сексуальность', callback_data='Sexuality')],
+        [InlineKeyboardButton(text='Отношения', callback_data='Relationships')],
+        [InlineKeyboardButton(text='Тело', callback_data='Body')]
+    ]
+)
 #Купить курс ХОЧУ ГОВОРИТЬ
 want_talk_show_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='КУПИТЬ КУРС 5000₽', callback_data='pay_for_content')]]
@@ -74,7 +79,6 @@ rela_show_kb = InlineKeyboardMarkup(inline_keyboard=[
 body_show_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='КУПИТЬ КУРС 5000₽', callback_data='pay_for_content_body')]]
 )
-
 #КУПИТЬ ТОРТ БЛАЖЕНСТВО
 pie_bliss_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='КУПИТЬ ТОРТ 888₽', callback_data='pay_for_pie_bliss')]]
@@ -83,7 +87,7 @@ pie_bliss_kb = InlineKeyboardMarkup(inline_keyboard=[
 #Быстрый переход на "купленные вебинары" после покупки
 my_web_kb = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text='перейти к вебинару', callback_data='go_to_the_webinar')]
+        [InlineKeyboardButton(text='перейти к вебинарам', callback_data='go_to_the_webinar')]
     ]
 )
 
@@ -112,17 +116,4 @@ my_web_rela = InlineKeyboardMarkup(
     ]
 )
 
-
-#Просмотр вебинаров
-Relationships_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text='Про отношения №1', callback_data='Relationships_1')],
-        [InlineKeyboardButton(text='Про отношения №2', callback_data='Relationships_2')]
-    ])
-Body_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text='Про тело №1', callback_data='Body_1')],
-        [InlineKeyboardButton(text='Про тело №2', callback_data='Body_2')]
-    ]
-)
-                        #БАЛАНС#
+#-----------------------------------------------------------------------------------------------------------------------------#

@@ -220,6 +220,12 @@ async def process_successful_payment(message: Message, bot: Bot):
 
 #---- Видео вебинары ----
 
+#Купленные вебинары - Отношения
+@router.callback_query(F.data == 'purchased_relationships')
+async def purchased_Sexuality_show(callback: CallbackQuery):
+    await callback.message.answer('Выберите часть:', reply_markup=kb_main.parts_rela)
+    await callback.answer()
+
 #1
 @router.callback_query(F.data == "purchades_rela_one")
 async def purchades_rela_one(callback: CallbackQuery, bot: Bot):
@@ -479,7 +485,7 @@ async def purchades_rela_three(callback: CallbackQuery, bot: Bot):
 async def go_to_the_webinar_want_talk(callback: CallbackQuery):
     await callback.message.answer('Купленные вебинары:', reply_markup=kb_main.Purchased_webinars)
     await callback.answer()
-#Быстрый переход к вебинару ХОЧУ говорить
+#Быстрый переход к вебинару отношения
 @router.callback_query(F.data == "webinare_rela")
 async def webinare_want_talk_transition(callback: CallbackQuery):
     await callback.message.answer('Выберите часть:', reply_markup=kb_main.my_web_rela)
