@@ -1,5 +1,5 @@
 from aiogram import Bot, types, F
-from aiogram.types import Message, CallbackQuery, LabeledPrice, SuccessfulPayment
+from aiogram.types import Message, CallbackQuery, LabeledPrice, SuccessfulPayment, FSInputFile
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import State, StatesGroup
@@ -8,12 +8,13 @@ from typing import Optional
 from datetime import datetime, timedelta
 import aiosqlite
 from handlers_show.handlers_admin import is_admin
-from bot.dao.database import save_payment, create_access_token, get_active_stream, create_access_token
+
+from bot.dao.database import (grant_content_access)
 import time, asyncio, os
 import keyboards.keyboards_admin as kb_admin
 from bot.dao.database import init_db
 from handlers_show.__init__ import logger, router
-
+import secrets
 
 DB_PATH = Path('data/streams.db')
 DB_PROMOKODE = Path('data/promokode.db')
@@ -43,7 +44,10 @@ def extract_chat_id_from_link(invite_link: str) -> Optional[int]:
         return None
     except Exception:
         return None
-
+    
+#------------------------------------------------------------------------------------------------------------------------------------------------------------#
+                                                            #СОЗДАНИЕ СТРИМА (ДЛЯ АДМИНА)
+#начало создания стрима
 @router.message(Command("start_stream"))
 async def start_stream_creation(message: Message, state: FSMContext):
     if not is_admin(message.from_user.id):
@@ -51,13 +55,13 @@ async def start_stream_creation(message: Message, state: FSMContext):
         
     await state.set_state(NewStream.NAME)
     await message.answer("Введите название стрима:")
-
+#Логика названия
 @router.message(NewStream.NAME)
 async def process_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
     await state.set_state(NewStream.PRICE)
     await message.answer("Введите цену в рублях (например: 299.99):")
-
+#Логика ценообразования
 @router.message(NewStream.PRICE)
 async def process_price(message: Message, state: FSMContext):
     try:
@@ -68,19 +72,19 @@ async def process_price(message: Message, state: FSMContext):
         await message.answer("Введите описание стрима:")
     except ValueError:
         await message.answer("Пожалуйста, введите число!")
-
+#Описание под стрим
 @router.message(NewStream.DESCRIPTION)
 async def process_description(message: Message, state: FSMContext):
     await state.update_data(payload=message.text)
     await state.set_state(NewStream.CHAT_ID)
     await message.answer("Введите ID чата для стрима (начинается с -100):")
-
+#Логика id-беседы стрима
 @router.message(NewStream.CHAT_ID)
 async def process_chat_id(message: Message, state: FSMContext):
     await state.update_data(chat_id=message.text)
     await state.set_state(NewStream.START_TIME)
     await message.answer("Введите дату начала (формат: ДД.ММ.ГГГГ ЧЧ:ММ):")
-
+#Дата начала стрима
 @router.message(NewStream.START_TIME)
 async def process_start_time(message: Message, state: FSMContext):
     try:
@@ -90,7 +94,7 @@ async def process_start_time(message: Message, state: FSMContext):
         await message.answer("Введите дату окончания (формат: ДД.ММ.ГГГГ ЧЧ:ММ):")
     except ValueError:
         await message.answer("Неправильный формат даты!")
-
+#Дата окончания стрима
 @router.message(NewStream.END_TIME)
 async def process_end_time(message: Message, state: FSMContext):
     try:
@@ -126,7 +130,7 @@ async def process_end_time(message: Message, state: FSMContext):
         logger.error(f"Ошибка в process_end_time: {e}")
         await message.answer("❌ Произошла ошибка. Попробуйте снова.")
         await state.clear()
-
+#
 @router.message(NewStream.INVITE_LINK)
 async def process_invite_link(message: Message, state: FSMContext):
     try:
@@ -183,6 +187,46 @@ async def process_invite_link(message: Message, state: FSMContext):
         await message.answer("❌ Ошибка при сохранении стрима. Попробуйте снова.")
         await state.clear()
 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+async def get_chat_id() -> int:
+    """Получает ПОСЛЕДНИЙ chat_id стрима из БД"""
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            cursor = await db.execute(
+                """SELECT chat_id FROM streams ORDER BY id DESC LIMIT 1"""
+            )
+            result = await cursor.fetchone()
+            
+        if not result:
+            raise ValueError("Chat ID не найден в БД")
+        
+        return int(result[0])
+    except Exception as e:
+        logger.error(f"Не смог найти id чата: {e}")
+        raise    
+
+async def create_chat_invite_link(bot: Bot):
+    """Создает одноразовую инвайт-ссылку для беседы"""
+    try:
+        # Получаем chat_id из БД (БЕЗ АРГУМЕНТОВ!)
+        chat_id = await get_chat_id()
+        
+        # Создаем инвайт-ссылку
+        invite_link = await bot.create_chat_invite_link(
+            chat_id=chat_id,
+            name=f"invite_{secrets.token_hex(8)}",
+            expire_date=datetime.now() + timedelta(hours=24),
+            member_limit=1,
+            creates_join_request=False
+        )
+        return invite_link.invite_link
+    except Exception as e:
+        logger.error(f"Ошибка создания инвайт-ссылки: {e}")
+        raise
+        
+
+#Оплата стрима (кнопка)
 @router.callback_query(F.data == "pay_stream")
 async def process_payment(callback: CallbackQuery, bot: Bot):
     try:
@@ -289,18 +333,19 @@ async def process_payment(callback: CallbackQuery, bot: Bot):
     except Exception as e:
         logger.error(f"Ошибка в process_payment: {e}")
         await callback.answer(f"Ошибка: {str(e)}", show_alert=True)
-
+#Проверка прошла ли платёжка - отправляем ссылку на стрим
 @router.message(F.successful_payment.invoice_payload.startswith("stream_"))
 async def handle_successful_payment(message: Message, bot: Bot):
     try:
-        payment = message.successful_payment
         user_id = message.from_user.id
+        
+        # Получаем инвайт-ссылку
+        invite_link = await create_chat_invite_link(bot)
 
-        #чек промо
+        # Обновляем промокод
         async with aiosqlite.connect(DB_PROMOKODE) as db:
             db.row_factory = aiosqlite.Row
             
-            # Находим промокод для обновления
             cursor = await db.execute(
                 """SELECT tag FROM use_promokode_users 
                 WHERE user_id = ? AND chapter = 'stream'
@@ -318,49 +363,21 @@ async def handle_successful_payment(message: Message, bot: Bot):
                 )
                 await db.commit()
 
-        # 1. Парсим payload
-        parts = payment.invoice_payload.split('_')
-        if len(parts) != 4:
-            raise ValueError("Неверный формат payload")
-        stream_id = int(parts[1])
+        # Обновляем основную БД
+        await grant_content_access(
+            user_id=user_id,
+            content_id="stream",
+            days=30
+        )
 
-        # 2. Получаем данные о стриме из БД
-        async with aiosqlite.connect(DB_PATH) as db:
-            cursor = await db.execute(
-                "SELECT invite_link FROM streams WHERE id = ?", 
-                (stream_id,)
-            )
-            stream = await cursor.fetchone()
-            
-        if not stream or not stream[0]:
-            raise ValueError("Стрим не найден или отсутствует invite-ссылка")
-            
-        invite_link = stream[0]
-
-        # 3. Пытаемся добавить пользователя в чат
-        try:
-            # Получаем chat_id из invite-ссылки
-            chat_id = extract_chat_id_from_link(invite_link)
-            if chat_id:
-                await bot.approve_chat_join_request(
-                    chat_id=chat_id,
-                    user_id=user_id
-                )
-        except Exception as e:
-            logger.error(f"Ошибка добавления в чат: {e}")
-
-        # 4. Всегда отправляем постоянную invite-ссылку
-        response = [
-            "🎉 Оплата прошла успешно!",
-            f"💵 Сумма: {payment.total_amount / 100:.2f} RUB",
-            "",
-            "🔗 Постоянная ссылка для входа в чат:",
-            f"{invite_link}",
-            "",
-            "Можете переходить сразу по ссылке выше"
-        ]
-        
-        await message.answer("\n".join(response))
+        # отправляем разовую ссылку
+        await message.answer(
+            "🎉 Оплата прошла успешно!\n\n"
+            f"Присоединяйтесь к нашему закрытому чату:\n"
+            f"👉 {invite_link}\n\n"
+            "⚠️ Ссылка действительна 24 часа и может быть использована только один раз!",
+            protect_content=True
+        )
         
     except ValueError as e:
         await message.answer(f"❌ Ошибка: {str(e)}")
@@ -425,22 +442,7 @@ async def handle_deep_link(message: Message, bot: Bot):
         logger.error(f"Ошибка обработки deep link: {e}")
         await message.answer("❌ Ошибка обработки ссылки")
 
-@router.message(Command("i"))
-async def get_chat_id(message: Message):
-    chat_id = message.chat.id
-    
-    # Правильное преобразование в формат для супергрупп (-100...)
-    if str(chat_id).startswith('-'):
-        supergroup_id = f"-100{str(chat_id)[4:]}" if str(chat_id).startswith('-100') else f"-100{str(chat_id)[1:]}"
-    else:
-        supergroup_id = f"-100{chat_id}"
-    
-    await message.answer(
-        f"ID этого чата: <code>{chat_id}</code>\n\n"
-        f"Для стримов используйте ID: <code>{supergroup_id}</code>",
-        parse_mode="HTML"
-    )
-
+#Узнать информацию о стриме для пользователя
 @router.callback_query(F.data == "stream_info")
 async def stream_info(callback: CallbackQuery, state: FSMContext):
     try:
@@ -471,3 +473,5 @@ async def stream_info(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         await callback.message.answer(f"❌ Ошибка при получении данных: {e}")
         await callback.answer()
+
+

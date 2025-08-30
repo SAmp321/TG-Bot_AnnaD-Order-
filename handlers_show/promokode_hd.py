@@ -89,6 +89,14 @@ async def want_create_promokode(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("Укажите процент скидки (1-98) (без %) [более 99, 100 процентов не вводить]:")
     await callback.answer()
 
+@router.callback_query(F.data == 'stream')
+async def want_create_promokode(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        return await callback.answer("Доступ запрещен", show_alert=True)
+    await state.update_data(chapter='stream')
+    await state.set_state(NewPromokode.percent)
+    await callback.message.answer("Укажите процент скидки (1-98) (без %) [более 99, 100 процентов не вводить]:")
+    await callback.answer()
 
 @router.message(NewPromokode.percent)
 async def process_percent(message: Message, state: FSMContext):
