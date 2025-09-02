@@ -480,12 +480,8 @@ async def purchades_rela_three(callback: CallbackQuery, bot: Bot):
         logger.error(f"Ошибка удаления: {e}")
         await callback.answer("⚠️ Не удалось удалить сообщение", show_alert=True)
 
-#Быстрый переход к мои вебинары после покупки
-@router.callback_query(F.data == 'go_to_the_webinar')
-async def go_to_the_webinar_want_talk(callback: CallbackQuery):
-    await callback.message.answer('Купленные вебинары:', reply_markup=kb_main.Purchased_webinars)
-    await callback.answer()
+
 #Быстрый переход к вебинару отношения
 @router.callback_query(F.data == "webinare_rela")
-async def webinare_want_talk_transition(callback: CallbackQuery):
+async def webinare_rela_transition(callback: CallbackQuery):
     await callback.message.answer('Выберите часть:', reply_markup=kb_main.my_web_rela)

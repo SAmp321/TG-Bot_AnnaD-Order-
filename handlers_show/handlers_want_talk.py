@@ -17,7 +17,7 @@ import asyncio
 from pathlib import Path
 from handlers_show.__init__ import logger, router
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from data.reg import Video_id_WT, Audio_id_WT, TXT_caption_WT
+from data.reg import Video_id_WT, Audio_id_WT, TXT_caption_WT, Photo_all
 scheduler = AsyncIOScheduler()
 scheduler = None
 
@@ -32,39 +32,47 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+#---------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-
-
-#Просмотр магазина - [Купить вебинар (Запись)]
+#Чек Отношения -- [Купить вебинар (Запись)]
 @router.callback_query(F.data == 'Want_talk')
-async def Want_talk_show(callback: CallbackQuery, bot: Bot):
+async def Send_want_talk_video_1(callback: CallbackQuery, bot: Bot):
+    error_messages = []
     try:
         await callback.answer()
-        
-        id_file = 'AgACAgIAAxkBAAIQAWid6akv22x06jJKXUAeCqEzUQpjAAJH8TEbVxDwSHUZEgifWJOGAQADAgADeQADNgQ'  # Относительный путь
+        #Берем id Фото
+        id_photo = Photo_all.get('Photo_WT_prevu')
+        if not id_photo:
+            error_messages.append('Фото не смогло загрузиться.')
+        #Проверка на существования id фото
+        if error_messages:
+            error_text = "\n".join(error_messages) + "\n\nПожалуйста, напишите в поддержку"
+            await callback.message.answer(error_text)
+            await callback.answer()  # Завершаем callback
             
+
         async with ChatActionSender.upload_photo(
             chat_id=callback.message.chat.id,
             bot=bot
         ):
             await bot.send_photo(
                 chat_id=callback.message.chat.id,
-                photo=(id_file),
-                caption=("Если ты не знаешь, как озвучить свое самое сокровенное,"
-                        "как сказать или высказать то болезненное и сложное, которое образует твое настроение. "
-                        "Как говорить с человеком который в гневе, кричит или покрывает тебя своим масштабом. "
-                        "Как говорить так, что бы обнять одним словом. "
-                        "Как договариваться со своей внутренней частью которая излишне правильная. "
-                        "Тогда тебе стоит пойти в «хочу говорить».\n\n"
-                        " Цена указана без учёта скидок."),
-                reply_markup=kb_main.want_talk_show_kb
-            )
+                photo=id_photo,
+                reply_markup=kb_main.want_talk_show_kb,
+                caption='Тут про чувственность и честность с собой. ' 
+                'Узнавать себя и свои точки взаимодействия с собой. ' 
+                'Познание всего в себе, что выходит на взаимодействия. ' 
+                'Что входит в контакт, те части, что узлучают приветствия ' 
+                'или отторгают любое взаимодействие. '
+                'Это не про делать и получить. '
+                'Это про быть, являться и чувствовать. ')
             
     except Exception as e:
-        logger.error(f"Ошибка в Want_talk_show_kb: {e}")
+        logger.error(f"Ошибка в want_talk_show_kb: {e}")
         await callback.answer("Произошла ошибка", show_alert=True)
+
 #Создание платежа
-@router.callback_query(F.data == 'pay_for_content')
+@router.callback_query(F.data == 'pay_for_content_want_talk')
 async def handle_pay_for_content(callback: CallbackQuery, bot: Bot):
     try:
         user_id = callback.from_user.id
@@ -155,54 +163,6 @@ async def handle_pay_for_content(callback: CallbackQuery, bot: Bot):
         print(f"Ошибка в handle_pay_for_content: {e}")
         await callback.answer("⚠️ Произошла ошибка", show_alert=True)
 
-@router.callback_query(F.data == 'buy')
-async def send_file_from_db(callback: CallbackQuery, bot: Bot):
-    user_id = callback.from_user.id
-    
-    if not await check_payment(user_id):
-        pay_button = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text="💳 Оплатить доступ", 
-                callback_data="pay_for_content"
-            )]
-        ])
-        await callback.message.answer(
-            "❌ Доступ к видео закрыт. Необходима оплата 5000 руб.",
-            reply_markup=pay_button
-        )
-        await callback.answer()
-        return
-    
-    # Если оплата есть - продолжаем отправку
-    file_path = get_user_payments(1)
-    max_size_description = "1й вебинар ХОЧУ ГОВОРИТЬ"
-    
-    if not file_path or not os.path.exists(file_path):
-        await callback.message.answer("Видео не найдено | 404 | Обратитесь к администратору")
-        return
-    
-    file_size = os.path.getsize(file_path) / (1024 * 1024)
-    
-    if file_size <= 50:
-        async with ChatActionSender.upload_video(
-            chat_id=callback.message.chat.id,  
-            bot=bot
-        ):
-            file = FSInputFile(file_path)
-            await callback.message.answer_video(file)  
-    else:
-        try:
-            file_id = "BAACAgIAAxkBAAIDOWhiXoFoFPKZf-f8gfBo-1189e6-AAIQeQACgiwRS0EiLJVD7ITfNgQ"
-            await bot.send_document(
-                chat_id=callback.message.chat.id,  
-                document=file_id,
-                caption=max_size_description
-            )
-        except Exception as e:
-            await callback.message.answer(f"Ошибка отправки: {e} | Обратитесь к администратору")  
-    
-    await callback.answer()  
-
 #Проверка прошла ли платёжка
 @router.pre_checkout_query()
 async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery, bot: Bot) -> None:
@@ -213,11 +173,16 @@ async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery, bot: 
 async def process_successful_payment(message: Message, bot: Bot):
     try:
         user_id = message.from_user.id
-        
+        error_messages = []
+
         id_video = Video_id_WT.get('Prevu_want_talk')
         if not id_video:
-            await message.answer("Видео не найдено")
-            return
+            error_messages.append("❌ Видео не найдено в базе")
+
+            if error_messages:
+                error_text = "\n".join(error_messages)
+                await message.answer(error_text)
+                return
         # 1. Обновляем промокод
         async with aiosqlite.connect(DB_PROMOKODE) as db:
             db.row_factory = aiosqlite.Row
@@ -248,26 +213,27 @@ async def process_successful_payment(message: Message, bot: Bot):
             protect_content=True
         )
 
-        # 3. Обновляем основную БД (ваша функция)
+        # 3. Обновляем основную БД
         await grant_content_access(
             user_id=user_id,
             content_id="Want_talk_one",
             days=30
         )
-        await message.answer('Перейти к вебенару?', reply_markup=kb_main.my_web_want_talk)
+        await message.answer('Перейти к разделу вебенара?', reply_markup=kb_main.parts_want_talk)
 
     except Exception as e:
         print(f"Ошибка обработки платежа: {e}")
         await message.answer("⚠️ Произошла ошибка. Обратитесь в поддержку.")
 
-#Чек магазина (сами видео)
+#---- Видео вебинары ----
+
+#Купленные вебинары - Отношения
 @router.callback_query(F.data == 'purchased_want_talk')
-async def purchased_want_talk(callback: CallbackQuery):
+async def purchased_Sexuality_show(callback: CallbackQuery):
     await callback.message.answer('Выберите часть:', reply_markup=kb_main.parts_want_talk)
     await callback.answer()
-#Купленные вебинары ___
 
-#первое видео хочу говорить
+#1 video
 @router.callback_query(F.data == "purchades_want_talk_video_one")
 async def send_purchased_videos_wt(callback: CallbackQuery, bot: Bot):
 
@@ -351,7 +317,7 @@ async def send_purchased_videos_wt(callback: CallbackQuery, bot: Bot):
     except Exception as e:
         logger.error(f"Ошибка удаления: {e}")
         await callback.answer("⚠️ Не удалось удалить сообщение", show_alert=True)
-#Второе видео хочу говорить
+#2 video
 @router.callback_query(F.data == "purchades_want_talk_video_two")
 async def send_purchased_videos_wt(callback: CallbackQuery, bot: Bot):
 
@@ -360,7 +326,7 @@ async def send_purchased_videos_wt(callback: CallbackQuery, bot: Bot):
     specific_content_id = "Want_talk_one"
     error_messages = []
     try:
-        #Наход ID и проверка на существование файлов
+
         id_video = Video_id_WT.get('want_talk_video_two')
         if not id_video:
             error_messages.append("❌ Видео не найдено в базе")
@@ -383,6 +349,7 @@ async def send_purchased_videos_wt(callback: CallbackQuery, bot: Bot):
             await callback.answer()  # Завершаем callback
             return
         
+
         #Проверка доступа
         async with aiosqlite.connect(db_Ibaza) as db:
             db.row_factory = aiosqlite.Row
@@ -435,7 +402,7 @@ async def send_purchased_videos_wt(callback: CallbackQuery, bot: Bot):
     except Exception as e:
         logger.error(f"Ошибка удаления: {e}")
         await callback.answer("⚠️ Не удалось удалить сообщение", show_alert=True)
-#Третие видео хочу говорить
+#3 video
 @router.callback_query(F.data == "purchades_want_talk_video_three")
 async def send_purchased_videos_three_wt(callback: CallbackQuery, bot: Bot):
 
@@ -521,11 +488,8 @@ async def send_purchased_videos_three_wt(callback: CallbackQuery, bot: Bot):
         await callback.answer("⚠️ Не удалось удалить сообщение", show_alert=True)
 
 
-#Быстрый переход к мои вебинары после покупки
-@router.callback_query(F.data == 'go_to_the_webinar')
-async def go_to_the_webinar_want_talk(callback: CallbackQuery):
-    await callback.message.answer('Купленные вебинары:', reply_markup=kb_main.Purchased_webinars)
-    await callback.answer()
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------#
+
 #Быстрый переход к вебинару ХОЧУ говорить
 @router.callback_query(F.data == "webinare_want_talk")
 async def webinare_want_talk_transition(callback: CallbackQuery):

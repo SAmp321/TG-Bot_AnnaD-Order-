@@ -1,7 +1,8 @@
 #Фотографии для всех
 Photo_all = {'Photo_body_prevu' : 'AgACAgIAAxkBAAIP82id08f3q9YSorR03UazR1xgU2RuAAKB9jEb8CDwSPpBbhXhWi5AAQADAgADeQADNgQ',
             'Photo_rela_prevu' : 'AgACAgIAAxkBAAISxWikejuu-QABR11sWxNLT7Ky52u1bgACm_kxG2FAKElrGmQYBFAD9gEAAwIAA3kAAzYE',
-            'Photo_Sex_prevu' : 'AgACAgIAAxkBAAIPwGidwbhphAOkcedzhLgoYWQ9vKwGAAKr9TEbIE7wSKe_9cIHm6v4AQADAgADeAADNgQ'}
+            'Photo_Sex_prevu' : 'AgACAgIAAxkBAAIPwGidwbhphAOkcedzhLgoYWQ9vKwGAAKr9TEbIE7wSKe_9cIHm6v4AQADAgADeAADNgQ',
+            'Photo_WT_prevu' : 'AgACAgIAAxkBAAIU9Wi21TZx1yiPJ9IkzbTQEWfhocpMAAJe9TEb-8q4SQWMn98QHl_3AQADAgADeQADNgQ'}
 
 #Видео хочу говорить
 Video_id_WT= { "Prevu_want_talk": "BAACAgIAAxkBAAIQg2igm6bGXtWPgkR2fk3oGJNtbvy_AAIpeAACU-sISSxrY3Kv3lTaNgQ", 

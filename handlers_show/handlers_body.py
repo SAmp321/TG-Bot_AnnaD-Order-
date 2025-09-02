@@ -534,5 +534,5 @@ async def go_to_the_webinar_want_talk(callback: CallbackQuery):
     await callback.answer()
 #Быстрый переход к вебинару ХОЧУ говорить
 @router.callback_query(F.data == "webinare_body")
-async def webinare_want_talk_transition(callback: CallbackQuery):
+async def webinare_want_body_transition(callback: CallbackQuery):
     await callback.message.answer('Выберите часть:', reply_markup=kb_main.my_web_sex)

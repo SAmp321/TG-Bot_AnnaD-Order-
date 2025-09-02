@@ -188,7 +188,7 @@ async def use_promokode(message: Message, state: FSMContext):
 @router.message(PromocodeState.waiting_promocode)
 async def process_promocode(message: Message, state: FSMContext):
     try:
-        user_promocode = message.text.strip().upper()
+        user_promocode = message.text.upper()
         user_id = message.from_user.id
         current_date = datetime.now().date()
         

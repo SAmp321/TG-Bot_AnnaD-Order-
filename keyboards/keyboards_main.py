@@ -65,7 +65,7 @@ webinar_kb = InlineKeyboardMarkup(
 )
 #Купить курс ХОЧУ ГОВОРИТЬ
 want_talk_show_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='КУПИТЬ КУРС 5000₽', callback_data='pay_for_content')]]
+    [InlineKeyboardButton(text='КУПИТЬ КУРС 5000₽', callback_data='pay_for_content_want_talk')]]
 )
 #Купить курс СЕКСУАЛЬНОСТЬ
 sex_show_kb = InlineKeyboardMarkup(inline_keyboard=[
