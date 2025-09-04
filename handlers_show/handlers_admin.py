@@ -29,7 +29,7 @@ async def get_admin_info_name(user_id: int):
         row = await cursor.fetchone()
         return row[0] if row else None
 
-# Админ панель
+# Админ панель вход
 @router.message(F.text == 'Администраторская')
 async def admin_command(message: Message):
     if not is_admin(message.from_user.id):
@@ -76,8 +76,8 @@ async def info_stats_sell(user_id: int):
         except Exception as e:
             logger.error(f"Ошибка при получении статистики: {e}")
             return None
-
-@router.message(Command('stats_for_sell'))
+#Статистика продаж
+@router.message(F.text == 'Статистика продаж [beta]')
 async def stats_for_sell(message: Message):
     if not is_admin(message.from_user.id):
         return await message.answer("Доступ запрещен", show_alert=True)
@@ -96,11 +96,10 @@ async def stats_for_sell(message: Message):
     
     await message.answer(response)
 
-@router.message(Command('Exit'))
+# Выйти из админ панели
+@router.message(F.text == 'Выйти')
 async def Exit_for_admin_panel(message: Message):
     if not is_admin(message.from_user.id):
         return await message.answer("Доступ запрещен", show_alert=True)
     await message.answer('Выход из админ панели', reply_markup=kb_main.main_kb)
-
-
 

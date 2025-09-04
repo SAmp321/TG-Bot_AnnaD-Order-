@@ -48,19 +48,20 @@ def extract_chat_id_from_link(invite_link: str) -> Optional[int]:
 #------------------------------------------------------------------------------------------------------------------------------------------------------------#
                                                             #СОЗДАНИЕ СТРИМА (ДЛЯ АДМИНА)
 #начало создания стрима
-@router.message(Command("start_stream"))
+@router.message(F.text == 'Создать прямую трансляцию')
 async def start_stream_creation(message: Message, state: FSMContext):
     if not is_admin(message.from_user.id):
         return await message.answer("Доступ запрещен")
         
     await state.set_state(NewStream.NAME)
-    await message.answer("Введите название стрима:")
+    await message.answer("Введите название стрима:", reply_markup=kb_admin.clear_completion)
+
 #Логика названия
 @router.message(NewStream.NAME)
 async def process_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
     await state.set_state(NewStream.PRICE)
-    await message.answer("Введите цену в рублях (например: 299.99):")
+    await message.answer("Введите цену в рублях (например: 299.99): \n\n Что бы прервать заполнение нажмите на кнопку!", reply_markup=kb_admin.clear_completion)
 #Логика ценообразования
 @router.message(NewStream.PRICE)
 async def process_price(message: Message, state: FSMContext):
@@ -69,7 +70,7 @@ async def process_price(message: Message, state: FSMContext):
         kopek = int(rub * 100)
         await state.update_data(amount_kopek=kopek)
         await state.set_state(NewStream.DESCRIPTION)
-        await message.answer("Введите описание стрима:")
+        await message.answer("Введите описание стрима:", reply_markup=kb_admin.clear_completion)
     except ValueError:
         await message.answer("Пожалуйста, введите число!")
 #Описание под стрим
@@ -77,13 +78,13 @@ async def process_price(message: Message, state: FSMContext):
 async def process_description(message: Message, state: FSMContext):
     await state.update_data(payload=message.text)
     await state.set_state(NewStream.CHAT_ID)
-    await message.answer("Введите ID чата для стрима (начинается с -100):")
+    await message.answer("Введите ID чата для стрима (начинается с -100):", reply_markup=kb_admin.clear_completion)
 #Логика id-беседы стрима
 @router.message(NewStream.CHAT_ID)
 async def process_chat_id(message: Message, state: FSMContext):
     await state.update_data(chat_id=message.text)
     await state.set_state(NewStream.START_TIME)
-    await message.answer("Введите дату начала (формат: ДД.ММ.ГГГГ ЧЧ:ММ):")
+    await message.answer("Введите дату начала (формат: ДД.ММ.ГГГГ ЧЧ:ММ):", reply_markup=kb_admin.clear_completion)
 #Дата начала стрима
 @router.message(NewStream.START_TIME)
 async def process_start_time(message: Message, state: FSMContext):
@@ -91,7 +92,7 @@ async def process_start_time(message: Message, state: FSMContext):
         start = datetime.strptime(message.text, "%d.%m.%Y %H:%M")
         await state.update_data(start_time=start)
         await state.set_state(NewStream.END_TIME)
-        await message.answer("Введите дату окончания (формат: ДД.ММ.ГГГГ ЧЧ:ММ):")
+        await message.answer("Введите дату окончания (формат: ДД.ММ.ГГГГ ЧЧ:ММ):", reply_markup=kb_admin.clear_completion)
     except ValueError:
         await message.answer("Неправильный формат даты!")
 #Дата окончания стрима
@@ -122,7 +123,7 @@ async def process_end_time(message: Message, state: FSMContext):
             "⚠️ Ссылка должна начинаться с https://t.me/ или t.me/"
         ]
         
-        await message.answer("\n".join(instructions))
+        await message.answer("\n".join(instructions), reply_markup=kb_admin.clear_completion)
         
     except ValueError:
         await message.answer("❌ Неверный формат даты! Используйте ДД.ММ.ГГГГ ЧЧ:ММ")
@@ -130,17 +131,12 @@ async def process_end_time(message: Message, state: FSMContext):
         logger.error(f"Ошибка в process_end_time: {e}")
         await message.answer("❌ Произошла ошибка. Попробуйте снова.")
         await state.clear()
-#
+#Инвайт ссылка (возможно не актуально)
 @router.message(NewStream.INVITE_LINK)
 async def process_invite_link(message: Message, state: FSMContext):
     try:
-        # Проверяем ссылку
-        if not (message.text.startswith("https://t.me/") or message.text.startswith("t.me/")):
-            await message.answer("❌ Некорректная ссылка! Должна начинаться с https://t.me/")
-            return
-            
         # Нормализуем ссылку
-        invite_link = message.text.replace("t.me/", "https://t.me/")
+        invite_link = message.text
         
         # Получаем все данные
         data = await state.get_data()
@@ -186,7 +182,13 @@ async def process_invite_link(message: Message, state: FSMContext):
         logger.error(f"Ошибка в process_invite_link: {e}")
         await message.answer("❌ Ошибка при сохранении стрима. Попробуйте снова.")
         await state.clear()
-
+#Прекращаем и выходим из создания стрима
+@router.callback_query(F.data == 'Exit_create_stream')
+async def Exit_create_stream(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.answer('✅Процесс заполнения прерван!')
+    await callback.answer()
+    return
 #------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 async def get_chat_id() -> int:

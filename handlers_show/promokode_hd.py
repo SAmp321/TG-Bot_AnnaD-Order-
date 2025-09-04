@@ -8,7 +8,6 @@ from typing import Optional
 from datetime import datetime, timedelta
 import aiosqlite
 from handlers_show.handlers_admin import is_admin
-from bot.dao.database import save_payment, create_access_token, get_active_stream, create_access_token
 import time, asyncio, os
 import keyboards.keyboards_admin as kb_admin
 from bot.dao.database import init_promokode
@@ -36,8 +35,8 @@ async def new_promokode_create(message: Message):
     await message.answer(
         'Создание промокода состоит из:\n'
         '1. Процент скидки (1-98%)\n'
-        '2. Дата начала действия (ГГГГ-ММ-ДД)\n'
-        '3. Дата окончания (ГГГГ-ММ-ДД)\n'
+        '2. Дата начала действия (ДД-ММ-ГГГГ)\n'
+        '3. Дата окончания (ДД-ММ-ГГГГ)\n'
         '4. Максимальное количество использований\n'
         '5. TAG промокода (начинается с *)'
         'Выберите для какого вебинара будет использоваться промокод',

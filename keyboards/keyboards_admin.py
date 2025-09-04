@@ -4,6 +4,8 @@ from aiogram.types import (
     InlineKeyboardMarkup, 
     InlineKeyboardButton
 )
+from aiogram import types
+from handlers_show.__init__ import router, logger
 
 # Основная клавиатура для пользователей
 main_kb = ReplyKeyboardMarkup(
@@ -18,22 +20,14 @@ main_kb = ReplyKeyboardMarkup(
 # Админская клавиатура
 main_admin_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text='/stats_for_sell')],
-        [KeyboardButton(text='/start_stream')],
+        [KeyboardButton(text='Статистика продаж [beta]')],
+        [KeyboardButton(text='Создать прямую трансляцию')],
         [KeyboardButton(text='Создать промокод')],
-        [KeyboardButton(text='/Exit')]
+        [KeyboardButton(text='Выйти')]
     ],
     resize_keyboard=True
 )
 
-# Клавиатура после успешной оплаты
-def get_success_kb(invite_link: str):
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text='🔗 Перейти в чат', url=invite_link)],
-            [InlineKeyboardButton(text='📌 Сохранить ссылку', callback_data='save_link')]
-        ]
-    )
 
 get_payment_kb = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -41,6 +35,10 @@ get_payment_kb = InlineKeyboardMarkup(
             [InlineKeyboardButton(text='ℹ️ Подробнее о стриме', callback_data='stream_info')]
         ]
     )
+
+clear_completion = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Прервать заполнение', callback_data='Exit_create_stream')]
+])
 
 new_promokode = InlineKeyboardMarkup(
     inline_keyboard=[
