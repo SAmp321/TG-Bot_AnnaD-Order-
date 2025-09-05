@@ -18,7 +18,7 @@ DB_PROMOKODE = Path('data/promokode.db')
 
 
 async def initialize_db():
-    """Инициализация базы данных с обработкой ошибок"""
+    #Инициализация базы данных с обработкой ошибок
     try:
         async with aiosqlite.connect(db_Ibaza) as db:
             # Включение поддержки внешних ключей
@@ -38,7 +38,7 @@ async def initialize_db():
                     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-
+                                    #Админ id - Имя
             await db.execute(""" 
                 CREATE TABLE IF NOT EXISTS admin(
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,7 +90,17 @@ async def initialize_db():
                     PRIMARY KEY (chat_id, message_id)
                 )
             """)
-            
+            #БД для массовой рассылки
+            await db.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id INTEGER PRIMARY KEY,
+                    username TEXT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    subscribed INTEGER DEFAULT 1
+                )
+            ''')
+                
             # Создание индексов для ускорения поиска
             await db.execute("CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)")
             await db.execute("CREATE INDEX IF NOT EXISTS idx_payments_id ON payments(payment_id)")
@@ -129,6 +139,16 @@ async def save_payment(
     except Exception as e:
         logger.error(f"❌ Ошибка сохранения: {str(e)}")
         return False
+
+# Функция для получения всех пользователей
+def get_all_users():
+    conn = sq.connect(db_Ibaza)
+    cursor = conn.cursor()
+    cursor.execute("SELECT user_id FROM users WHERE subscribed = 1")
+    users = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return users
+
 
 async def check_payment(
     user_id: int, 
@@ -293,7 +313,6 @@ async def check_db_tables():
         tables = await cursor.fetchall()
         return any('payments' in table for table in tables)
     
-
 async def save_sent_message(
     user_id: int,
     chat_id: int,
@@ -363,7 +382,6 @@ async def activate_access_after_payment(payload: str, bot: Bot):
     except Exception as e:
         logger.error(f"Ошибка активации доступа: {e}")
         return False
-    
 
 async def is_admin(user_id: int) -> bool:
     """Проверяет, есть ли user_id в таблице admin"""

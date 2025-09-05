@@ -7,6 +7,7 @@ from aiogram.utils.chat_action import ChatActionSender
 import asyncio
 import logging
 import aiosqlite
+import sqlite3 as sq
 from yookassa import Configuration
 from pathlib import Path
 import keyboards.keyboards_admin as kb_admin
@@ -16,14 +17,25 @@ from bot.dao.database import db_Ibaza as db
 
 dp = Dispatcher()
 from handlers_show.__init__ import router, logger
+db_Ibaza = Path('data/info_baza.db')
+
 
 PROVIDER_TOKEN = '381764678:TEST:129002'
 CURRENCY = 'RUB'
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
+        # Сохраняем пользователя в БД
+    conn = sq.connect(db_Ibaza)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT OR IGNORE INTO users (user_id, username, first_name, last_name)
+        VALUES (?, ?, ?, ?)
+    ''', (message.from_user.id, message.from_user.username, 
+          message.from_user.first_name, message.from_user.last_name))
+    conn.commit()
+    conn.close()
     await message.answer('👽', reply_markup=kb_main.main_kb)
-
 
 @router.message(F.text == 'Купленные вебинары')
 async def NaMe(message: Message):
@@ -57,7 +69,7 @@ async def delete_message_after_delay(bot: Bot, chat_id: int, message_id: int, de
     except Exception as e:
         logger.error(f"Ошибка при удалении сообщения {message_id}: {e}")
 
-@router.message(F.content_type.in_({'photo', 'video', 'document', 'audio'}))
+@router.message(F.content_type.in_({'photo', 'video', 'document', 'audio'}) and Command('id'))
 async def handle_media(message: Message):
     if message.photo:
         file_id = message.photo[-1].file_id  # Берем самое высокое качество

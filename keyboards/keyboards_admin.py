@@ -21,7 +21,7 @@ main_kb = ReplyKeyboardMarkup(
 main_admin_kb = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text='Статистика продаж [beta]')],
-        [KeyboardButton(text='Создать прямую трансляцию')],
+        [KeyboardButton(text='Создать прямую трансляцию'), KeyboardButton(text='Массовая рассылка')],
         [KeyboardButton(text='Создать промокод')],
         [KeyboardButton(text='Выйти')]
     ],
